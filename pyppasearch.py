@@ -27,7 +27,7 @@ class Repo:
             source = result.select_one("a.sprite").text
             name = source.split()[0]
             version = source.split()[2]
-            series = result.select_one(f"td:nth-child({series_index + 2})").text
+            series = result.select_one(f"td:nth-of-type({series_index + 2})").text
             if name == search:
                 packages.append(Package(self.user, self.name, name, version, series))
         return packages
