@@ -7,6 +7,7 @@ To use it one should install Python 3 packages using `sudo apt-get install pytho
 This script will search from https://launchpad.net/ubuntu/+ppas, and then get packages information from each PPA, including package name, version and Ubuntu codename and CPU architecture.
 
 ## Usage
+```
 usage: pyppasearch.py [-h] [-c CODENAME] [-a ARCH] package
 
 positional arguments:
@@ -18,3 +19,4 @@ optional arguments:
                         First word of Ubuntu code name, e.g. Focal
   -a ARCH, --arch ARCH  CPU architecture, one of amd64, i386, armhf, arm64,
                         etc.
+```
