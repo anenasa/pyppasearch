@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
+import argparse
 import requests
 from bs4 import BeautifulSoup
-import argparse
-
+from launchpadlib.launchpad import Launchpad
 
 class Repo:
     def __init__(self, user, name, url):
@@ -11,25 +11,17 @@ class Repo:
         self.name = name
         self.url = url
 
-    def search(self, search):
-        resp = requests.get(self.url)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        thead = soup.select("thead > tr > th")
-        series_index = 3
-        # Sometimes there is "Uploader" in table, so position of index will change
-        for j in range(len(thead)):
-            if thead[j].text == "Series":
-                series_index = j
-                break
-        results = soup.select("tbody > tr.archive_package_row")
+    def search(self, lp, codename, cpu_arch, search):
+        owner = lp.people[self.user]
+        archive = owner.getPPAByName(distribution=lp.distributions["ubuntu"], name=self.name)
+        desired_dist_and_arch = 'https://api.launchpad.net/devel/ubuntu/' + codename + '/' + cpu_arch
+        binaries = archive.getPublishedBinaries(status='Published',distro_arch_series=desired_dist_and_arch)
+
         packages = []
-        for result in results:
-            source = result.select_one("a.sprite").text
-            name = source.split()[0]
-            version = source.split()[2]
-            series = result.select_one(f"td:nth-of-type({series_index + 2})").text
-            if name == search:
-                packages.append(Package(self.user, self.name, name, version, series))
+        if len(binaries) > 0:
+            for binary in binaries:
+                if binary.binary_package_name == search:
+                    packages.append(Package(self.user, self.name, binary.binary_package_name, binary.binary_package_version, codename))
         return packages
 
 
@@ -58,17 +50,18 @@ def search_ppa(search):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--codename", type=str, help="First word of Ubuntu code name, e.g. Focal")
+    parser.add_argument("-a", "--arch", type=str, help="CPU architecture, one of amd64, i386, armhf, arm64, etc.")
     parser.add_argument("package", type=str, help="exact name of the package you want to search")
     args = parser.parse_args()
+
+    lp = Launchpad.login_anonymously("ppa-search", "edge", "~/.launchpadlib/cache/", version="devel")
 
     repos = search_ppa(args.package)
     for i in range(len(repos)):
         print(f"\rSearching {i + 1}/{len(repos)}", end='')
-
-        packages = repos[i].search(args.package)
+        packages = repos[i].search(lp, args.codename.lower(), args.arch, args.package)
         for package in packages:
-            if args.codename is None or package.series == args.codename:
-                print(f"\r{package.name} {package.version} {package.user}/{package.repo} {package.series}")
+            print(f"\r{package.name} {package.version} ppa:{package.user}/{package.repo} {package.series.capitalize()} ({args.arch})")
 
     print("\rSearch is finished.")
 
