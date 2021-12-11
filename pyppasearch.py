@@ -14,23 +14,27 @@ class Repo:
     def search(self, lp, codename, cpu_arch, search):
         owner = lp.people[self.user]
         archive = owner.getPPAByName(distribution=lp.distributions["ubuntu"], name=self.name)
-        desired_dist_and_arch = 'https://api.launchpad.net/devel/ubuntu/' + codename + '/' + cpu_arch
-        binaries = archive.getPublishedBinaries(status='Published',distro_arch_series=desired_dist_and_arch, binary_name=search, exact_match=True)
+        binaries = archive.getPublishedBinaries(status='Published', binary_name=search, exact_match=True)
 
         packages = []
         if len(binaries) > 0:
             for binary in binaries:
-                packages.append(Package(self.user, self.name, binary.binary_package_name, binary.binary_package_version, codename))
+                distro_arch_series = binary.distro_arch_series_link
+                binary_codename = distro_arch_series.split('/')[-2]
+                binary_arch = distro_arch_series.split('/')[-1]
+                if (codename is None or codename.lower() == binary_codename) and (cpu_arch is None or cpu_arch == binary_arch):
+                    packages.append(Package(self.user, self.name, binary.binary_package_name, binary.binary_package_version, binary_codename, binary_arch))
         return packages
 
 
 class Package:
-    def __init__(self, user, repo, name, version, series):
+    def __init__(self, user, repo, name, version, series, arch):
         self.user = user
         self.repo = repo
         self.name = name
         self.version = version
         self.series = series
+        self.arch = arch
 
 
 def search_ppa(search):
@@ -58,9 +62,9 @@ def main():
     repos = search_ppa(args.package)
     for i in range(len(repos)):
         print(f"\rSearching {i + 1}/{len(repos)}", end='')
-        packages = repos[i].search(lp, args.codename.lower(), args.arch, args.package)
+        packages = repos[i].search(lp, args.codename, args.arch, args.package)
         for package in packages:
-            print(f"\r{package.name} {package.version} ppa:{package.user}/{package.repo} {package.series.capitalize()} ({args.arch})")
+            print(f"\r{package.name} {package.version} ppa:{package.user}/{package.repo} {package.series.capitalize()} ({package.arch})")
 
     print("\rSearch is finished.")
 
