@@ -15,13 +15,12 @@ class Repo:
         owner = lp.people[self.user]
         archive = owner.getPPAByName(distribution=lp.distributions["ubuntu"], name=self.name)
         desired_dist_and_arch = 'https://api.launchpad.net/devel/ubuntu/' + codename + '/' + cpu_arch
-        binaries = archive.getPublishedBinaries(status='Published',distro_arch_series=desired_dist_and_arch)
+        binaries = archive.getPublishedBinaries(status='Published',distro_arch_series=desired_dist_and_arch, binary_name=search, exact_match=True)
 
         packages = []
         if len(binaries) > 0:
             for binary in binaries:
-                if binary.binary_package_name == search:
-                    packages.append(Package(self.user, self.name, binary.binary_package_name, binary.binary_package_version, codename))
+                packages.append(Package(self.user, self.name, binary.binary_package_name, binary.binary_package_version, codename))
         return packages
 
 
