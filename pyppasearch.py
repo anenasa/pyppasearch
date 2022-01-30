@@ -11,10 +11,10 @@ class Repo:
         self.name = name
         self.url = url
 
-    def search(self, lp, codename, cpu_arch, search):
+    def search(self, lp, codename, cpu_arch, noexact, search):
         owner = lp.people[self.user]
         archive = owner.getPPAByName(distribution=lp.distributions["ubuntu"], name=self.name)
-        binaries = archive.getPublishedBinaries(status='Published', binary_name=search, exact_match=True)
+        binaries = archive.getPublishedBinaries(status='Published', binary_name=search, exact_match=not noexact)
 
         packages = []
         if len(binaries) > 0:
@@ -54,6 +54,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--codename", type=str, help="First word of Ubuntu code name, e.g. Focal")
     parser.add_argument("-a", "--arch", type=str, help="CPU architecture, one of amd64, i386, armhf, arm64, etc.")
+    parser.add_argument("--noexact", action="store_true", help="also search for not exact match")
     parser.add_argument("package", type=str, help="exact name of the package you want to search")
     args = parser.parse_args()
 
@@ -62,7 +63,7 @@ def main():
     repos = search_ppa(args.package)
     for i in range(len(repos)):
         print(f"\rSearching {i + 1}/{len(repos)}", end='')
-        packages = repos[i].search(lp, args.codename, args.arch, args.package)
+        packages = repos[i].search(lp, args.codename, args.arch, args.noexact, args.package)
         for package in packages:
             print(f"\r{package.name} {package.version} ppa:{package.user}/{package.repo} {package.series.capitalize()} ({package.arch})")
 
