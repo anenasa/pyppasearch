@@ -1,0 +1,8 @@
+#https://pypi.org/project/requests/
+requests>=2.28.1
+
+#https://pypi.org/project/beautifulsoup4/
+beautifulsoup4>=4.11.1
+
+#https://pypi.org/project/launchpadlib/
+launchpadlib>=1.1.0
