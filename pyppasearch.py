@@ -40,7 +40,7 @@ class Package:
 def search_ppa(search):
     resp = requests.get(f"https://launchpad.net/ubuntu/+ppas?name_filter={search}&batch=300")
     soup = BeautifulSoup(resp.text, "html.parser")
-    results = soup.select("tr.ppa_batch_row > td > a")
+    results = soup.select('tr.ppa_batch_row > td > a:not([href=""])')
     repos = []
     for result in results:
         url = "https://launchpad.net" + result['href'] + "/+packages?batch=300"
